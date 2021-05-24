@@ -88,15 +88,15 @@ $(function() {
   });
   // 3
   $('#q3').click(fadeOut);
-    function fadeOut() {
-      $(this).fadeOut(2000);
-    }
+  function fadeOut() {
+    $(this).fadeOut(2000);
+  }
   // 4
   $('#q4').click(function() {
-    $(this).prepend('content')
-           .append('content')
-           .before('content')
-           .after('content');       
+    $(this).prepend('content_prepend')
+           .append('content_append')
+           .before('content_before')
+           .after('content_after');       
   });
   // 5
   $('#q5').click(function() {
@@ -104,34 +104,33 @@ $(function() {
   });
   // 6
   $('#q6').click(makeSpace);
-    function makeSpace() {
-      $(this).animate(
-        {
-          marginTop: 100,
-          marginLeft:100
-        },
-        2000
-      );
-    }
+  function makeSpace() {
+    $(this).animate(
+      {
+        marginTop: 100,
+        marginLeft:100
+      },
+      2000
+    );
+  }
   // 7
   $('#q7').find('li').click(getNum);
-    function getNum() {
-      var clickedNum = $(this).index();
-      console.log(clickedNum);
-      alert(clickedNum);
-    }
+  function getNum() {
+    var clickedNum = $(this).index();
+    console.log(clickedNum);
+    alert(clickedNum);
+  }
   // 8
   $('#q8').hover(
     function() {
       $(this).addClass('large');
-    }
-    ,
+    },
     function() {
       $(this).removeClass('large');
     }
   );
   // 9
-  var dataName = $('#q9').data('text');
+  var dataName = $('#q9').data();
     $('#q9').click(showData);
     function showData() {
       console.log(dataName);
@@ -145,9 +144,6 @@ $(function() {
                .eq(indexNum)
                .addClass('large');
     }
-    
-    
-  
 });
 </script>
 </body>
