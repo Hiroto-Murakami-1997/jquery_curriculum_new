@@ -96,28 +96,131 @@
       //     <a class="btn-item" data-js="page-next" href="">次へ</a>
       //   </div>
       // </div>
-      $(function() {
-        // ページャを隠す
-        $('.pager').hide();
-        //読み込むページ番号の定義
-        var readPage = 1;
-        // 検索ボタンを押した後の処理
-        $('.search__btn').on('click',function(){
-          // リストの削除
-          $('.lists').find('.lists__item').remove();
+
+// ページャを隠す
+var hidePager = function(){
+$('.pager').hide();
+}
+
+hidePager();
+
+// リストの削除
+var removeLists = function(){
+$('.lists').find('.lists__item').remove();
+}
+
+// 追加HTML
+var listHtml = '<li class="lists__item"><div class="lists__item__inner"><a href="#" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail name__title">作品名：</p><p class="lists__item__detail name__author">作者　：</p><p class="lists__item__detail name__publisher">出版社：</p></a></div></li>';
+
+//ページ番号セット
+var readPage = 1;
+
+// 検索ボタンを押した後の処理
+$('.search__btn').on('click',function(){
+
+//既存リスト削除
+removeLists();
+
+// 検索キーワードの受け渡し
+var inputKeyword = $('.search__text__input').val();
+
+//ページ番号の初期化
+if(readPage >= 2){
+readPage = 1;
+}
+
+// 楽天ブックス情報の読み込み
+$.ajax({
+url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+type: 'GET',
+datatype: 'json',
+data: {
+// 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
+applicationId: appId, 
+booksGenreId: '001',
+hits: 20,
+keyword: inputKeyword,
+page: readPage
+}
+}).done(function(data) {
+
+// 通信成功時の処理
+
+// データがあるときページャを表示
+if(data){
+$('.pager').show();
+}
+
+// ページャデータの定義
+pageCount = data.pageCount;
+var currentPage = data.page;
+$('.counter-all').text(pageCount);
+$('.counter-current').text(currentPage);
+
+// ページャのデフォルト設定
+$('.btn-wrapper').children('.btn-item')
+              .css('pointerEvents', 'auto')
+              .css('backgroundColr', '#43cee0')
+              .hover(
+              function(){
+                $(this).css('backgroundColor', '#1eabbd');
+              },
+              function(){
+                $(this).css('backgroundColor', '#43cee0');
+              }
+              );
+
+// ページャの先頭と最後尾のボタン設定
+$('.btn-wrapper').children('.btn-item')
+              .eq(0)
+              .css('pointerEvents', 'none')
+              .css('backgroundColor', '#888');
+
+// 検索結果が１ページのみの場合
+if (currentPage === pageCount){
+$('.btn-wrapper').children('.btn-item')
+                .css('pointerEvents', 'none')
+                .css('backgroundColor', '#888');
+}
+
+// ブックデータの整理と定義
+var bookData = data.Items;
+$.each(bookData, function(index,val) {
+var data__img = val.Item.largeImageUrl;
+var data__author = val.Item.author;
+var data__title = val.Item.title;
+var data__publisherName = val.Item.publisherName;
+var data__url = val.Item.itemUrl;
+
+// データのあてはめとhtmlの追加
+$('.lists').append(listHtml);
+$('.lists__item__link').eq(index).attr('href', data__url);
+$('.lists__item__img').eq(index).attr('src', data__img);
+$('.lists__item__img').eq(index).attr('alt', data__title);
+$('.name__title').eq(index).append(data__title);
+$('.name__author').eq(index).append(data__author);
+$('.name__publisher').eq(index).append(data__publisherName);
+});
+});
+});
+// 次へボタン
+$('.btn-wrapper').children('.btn-item')
+          .eq(1)
+          .on('click', function(){
+
+          readPage++;
+          hidePager();
+          removeLists();
+
           // 検索キーワードの受け渡し
           var inputKeyword = $('.search__text__input').val();
-          //ページ番号の初期化
-          if(readPage >= 2){
-              readPage = 1;
-          }
-          // 楽天ブックス情報の読み込み
+
+          // データ再取得と割り当て
           $.ajax({
             url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
             type: 'GET',
             datatype: 'json',
             data: {
-              // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
               applicationId: appId, 
               booksGenreId: '001',
               hits: 20,
@@ -125,232 +228,187 @@
               page: readPage
             }
           }).done(function(data) {
-            // 通信成功時の処理
-            console.log('scope1---' + readPage);
+
+            // データ再取得後の処理
+
             // データがあるときページャを表示
             if(data){
               $('.pager').show();
             }
+
             // ページャデータの定義
-            pageCount = data.pageCount;
+            var pageCount = data.pageCount;
             var currentPage = data.page;
             $('.counter-all').text(pageCount);
             $('.counter-current').text(currentPage);
-            // ページャのデフォルト設定
+
+            //最後のページに到達した時次へボタンを無効にし、前へボタンを有効化する
+            if(readPage === pageCount){ 
+
+            console.log('is prevented');
+            console.log('scope2.1---' + 'readPage=>' + readPage + '___' + 'pageCount=>' + pageCount);
+
             $('.btn-wrapper').children('.btn-item')
-                             .css('pointerEvents', 'auto')
-                             .css('backgroundColr', '#43cee0')
-                             .hover(
-                                function(){
-                                  $(this).css('backgroundColor', '#1eabbd');
-                                },
-                                function(){
-                                  $(this).css('backgroundColor', '#43cee0');
-                                }
-                              );      
-            // ページャの先頭と最後尾のボタン設定
+                              .eq(1)
+                              .css('backgroundColor', '#888')
+                              .css('pointerEvents', 'none');
+                              
             $('.btn-wrapper').children('.btn-item')
-                             .eq(0)
-                             .css('pointerEvents', 'none')
-                             .css('backgroundColor', '#888');
-            if (currentPage === pageCount){
-              $('.btn-wrapper').children('.btn-item')
-                               .css('pointerEvents', 'none')
-                               .css('backgroundColor', '#888');
-            }
+                              .eq(0)
+                              .css('pointerEvents', 'auto')
+                              .css('backgroundColor', '#43cee0')
+                              .hover(
+                              function(){
+                                $(this).css('backgroundColor', '#1eabbd');
+                              },
+                              function(){
+                                $(this).css('backgroundColor', '#43cee0');
+                              }
+                              );
+
+          } else {
+
+            //まだページがある場合ボタン有効化
+            console.log('is not prevented');
+            console.log('scope2.2---' + 'readPage=>' + readPage + '___' + 'pageCount=>' + pageCount);
+
+            $('.btn-wrapper').children('.btn-item')
+                              .css('pointerEvents', 'autmo')
+                              .css('backgroundColor', '#43cee0')
+                              .hover(
+                              function(){
+                                $(this).css('backgroundColor', '#1eabbd');
+                              },
+                              function(){
+                                $(this).css('backgroundColor', '#43cee0');
+                              }
+                              );     
+                                          
+          }
             
             // ブックデータの整理と定義
             var bookData = data.Items;
+
             $.each(bookData, function(index,val) {
+
               var data__img = val.Item.largeImageUrl;
               var data__author = val.Item.author;
               var data__title = val.Item.title;
               var data__publisherName = val.Item.publisherName;
+              var data__url = val.Item.itemUrl;
               
               // データのあてはめとhtmlの追加
-              $('.lists').append('<li class="lists__item"><div class="lists__item__inner"><a href="" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail name__title">作品名：</p><p class="lists__item__detail name__author">作者　：</p><p class="lists__item__detail name__publisher">出版社：</p></a></div></li>');
+              $('.lists').append(listHtml);
+              $('.lists__item__link').eq(index).attr('href', data__url);
               $('.lists__item__img').eq(index).attr('src', data__img);
               $('.lists__item__img').eq(index).attr('alt', data__title);
               $('.name__title').eq(index).append(data__title);
               $('.name__author').eq(index).append(data__author);
               $('.name__publisher').eq(index).append(data__publisherName);
+
             });
           });
         });
-        // 次へボタン
-        $('.btn-wrapper').children('.btn-item')
-                         .eq(1)
-                         .on('click', function(){
-                          readPage++;
-                          $('.lists').find('.lists__item').remove();
-                          $('.pager').hide();
-                          // 検索キーワードの受け渡し
-                          var inputKeyword = $('.search__text__input').val();
-                          // データ再取得と割り当て
-                          $.ajax({
-                            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
-                            type: 'GET',
-                            datatype: 'json',
-                            data: {
-                              applicationId: appId, 
-                              booksGenreId: '001',
-                              hits: 20,
-                              keyword: inputKeyword,
-                              page: readPage
-                            }
-                          }).done(function(data) {
-                            // データ再取得後の処理
-                            if(data){
-                            // データがあるときページャを表示
-                              $('.pager').show();
-                            }
-                            // ページャデータの定義
-                            var pageCount = data.pageCount;
-                            var currentPage = data.page;
-                            $('.counter-all').text(pageCount);
-                            $('.counter-current').text(currentPage);
+// 前へボタン
+$('.btn-wrapper').children('.btn-item')
+          .eq(0)
+          .on('click', function(){
 
-                            if(readPage === pageCount){ 
-                            console.log('is prevented');
-                            console.log('scope2.1---' + 'readPage=>' + readPage + '___' + 'pageCount=>' + pageCount);
-                            $('.btn-wrapper').children('.btn-item')
-                                             .eq(1)
-                                             .css('backgroundColor', '#888')
-                                             .css('pointerEvents', 'none');
-                                             
-                            $('.btn-wrapper').children('.btn-item')
-                                             .eq(0)
-                                             .css('pointerEvents', 'auto')
-                                             .css('backgroundColor', '#43cee0')
-                                             .hover(
-                                                function(){
-                                                  $(this).css('backgroundColor', '#1eabbd');
-                                                },
-                                                function(){
-                                                  $(this).css('backgroundColor', '#43cee0');
-                                                }
-                                              );                              
-                          } else { 
-                            console.log('is not prevented');
-                            console.log('scope2.2---' + 'readPage=>' + readPage + '___' + 'pageCount=>' + pageCount);
-                            $('.btn-wrapper').children('.btn-item')
-                                             .css('pointerEvents', 'auto')
-                                             .css('backgroundColor', '#43cee0')
-                                             .hover(
-                                                function(){
-                                                  $(this).css('backgroundColor', '#1eabbd');
-                                                },
-                                                function(){
-                                                  $(this).css('backgroundColor', '#43cee0');
-                                                });                                 
-                          }
-                            
-                            // ブックデータの整理と定義
-                            var bookData = data.Items;
-                            $.each(bookData, function(index,val) {
-                              var data__img = val.Item.largeImageUrl;
-                              var data__author = val.Item.author;
-                              var data__title = val.Item.title;
-                              var data__publisherName = val.Item.publisherName;
-                              
-                              // データのあてはめとhtmlの追加
-                              $('.lists').append('<li class="lists__item"><div class="lists__item__inner"><a href="" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail name__title">作品名：</p><p class="lists__item__detail name__author">作者　：</p><p class="lists__item__detail name__publisher">出版社：</p></a></div></li>');
-                              $('.lists__item__img').eq(index).attr('src', data__img);
-                              $('.lists__item__img').eq(index).attr('alt', data__title);
-                              $('.name__title').eq(index).append(data__title);
-                              $('.name__author').eq(index).append(data__author);
-                              $('.name__publisher').eq(index).append(data__publisherName);
-                            });
-                          });
-                        });
-        // 前へボタン
-        $('.btn-wrapper').children('.btn-item')
-                         .eq(0)
-                         .on('click', function(){
-                          readPage--;
-                          console.log('scope3---' + readPage);
-                          
-                          $('.lists').find('.lists__item').remove();
-                          $('.pager').hide();
-                          // 検索キーワードの受け渡し
-                          var inputKeyword = $('.search__text__input').val();
-                          // データ再取得と割り当て
-                          $.ajax({
-                            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
-                            type: 'GET',
-                            datatype: 'json',
-                            data: {
-                              applicationId: appId, 
-                              booksGenreId: '001',
-                              hits: 20,
-                              keyword: inputKeyword,
-                              page: readPage
-                            }
-                          }).done(function(data) {
-                           
-                            // データ再取得後の処理
-                            if(data){
-                            // データがあるときページャを表示
-                              $('.pager').show();
-                            }
-                            // ページャデータの定義
-                            var pageCount = data.pageCount;
-                            var currentPage = data.page;
-                            $('.counter-all').text(pageCount);
-                            $('.counter-current').text(currentPage);
+            readPage--;
+            hidePager();
+            removeLists();
 
-                            // ページャの先頭と最後尾のボタン設定
-                         if(readPage === 1){
-                           console.log('click');
-                              $('.btn-wrapper').children('.btn-item')
-                                               .eq(0)
-                                               .css('backgroundColor', '#888')
-                                               .css('pointerEvents', 'none');
-                              $('.btn-wrapper').children('.btn-item')
-                                               .eq(1)
-                                               .css('pointerEvents', 'auto')
-                                               .css('backgroundColor', '#43cee0')
-                                               .hover(
-                                                function(){
-                                                  $(this).css('backgroundColor', '#1eabbd');
-                                                },
-                                                function(){
-                                                  $(this).css('backgroundColor', '#43cee0');
-                                                }
-                                               );
-                              } else {
-                              $('.btn-wrapper').children('.btn-item')
-                                               .css('pointerEvents', 'auto')
-                                               .css('backgroundColor', '#43cee0')
-                                               .hover(
-                                                  function(){
-                                                    $(this).css('backgroundColor', '#1eabbd');
-                                                  },
-                                                  function(){
-                                                    $(this).css('backgroundColor', '#43cee0');
-                                                  }
-                                                );
-                          }
-                            
-                            // ブックデータの整理と定義
-                            var bookData = data.Items;
-                            $.each(bookData, function(index,val) {
-                              var data__img = val.Item.largeImageUrl;
-                              var data__author = val.Item.author;
-                              var data__title = val.Item.title;
-                              var data__publisherName = val.Item.publisherName;
-                              
-                              // データのあてはめとhtmlの追加
-                              $('.lists').append('<li class="lists__item"><div class="lists__item__inner"><a href="" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail name__title">作品名：</p><p class="lists__item__detail name__author">作者　：</p><p class="lists__item__detail name__publisher">出版社：</p></a></div></li>');
-                              $('.lists__item__img').eq(index).attr('src', data__img);
-                              $('.lists__item__img').eq(index).attr('alt', data__title);
-                              $('.name__title').eq(index).append(data__title);
-                              $('.name__author').eq(index).append(data__author);
-                              $('.name__publisher').eq(index).append(data__publisherName);
-                            });
-                          });
-                        });
-      });
+            // 検索キーワードの受け渡し
+            var inputKeyword = $('.search__text__input').val();
+            // データ再取得と割り当て
+            $.ajax({
+              url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+              type: 'GET',
+              datatype: 'json',
+              data: {
+                applicationId: appId, 
+                booksGenreId: '001',
+                hits: 20,
+                keyword: inputKeyword,
+                page: readPage
+              }
+            }).done(function(data) {
+            
+              // データ再取得後の処理
+              if(data){
+
+              // データがあるときページャを表示
+                $('.pager').show();
+              }
+              // ページャデータの定義
+              var pageCount = data.pageCount;
+              var currentPage = data.page;
+              $('.counter-all').text(pageCount);
+              $('.counter-current').text(currentPage);
+
+              // ページャの先頭と最後尾のボタン設定
+              if(readPage === 1){
+
+                console.log('is prevented');
+                console.log('scope3.1---' + 'readPage=>' + readPage + '___' + 'pageCount=>' + pageCount);
+
+                $('.btn-wrapper').children('.btn-item')
+                                  .eq(0)
+                                  .css('backgroundColor', '#888')
+                                  .css('pointerEvents', 'none');
+
+                $('.btn-wrapper').children('.btn-item')
+                                  .eq(1)
+                                  .css('pointerEvents', 'auto')
+                                  .css('backgroundColor', '#43cee0')
+                                  .hover(
+                                    function(){
+                                      $(this).css('backgroundColor', '#1eabbd');
+                                    },
+                                    function(){
+                                      $(this).css('backgroundColor', '#43cee0');
+                                    }
+                                  );  
+
+              } else {
+
+                    console.log('is not prevented');
+                    console.log('scope3.2---' + 'readPage=>' + readPage + '___' + 'pageCount=>' + pageCount);
+
+                    $('.btn-wrapper').children('.btn-item')
+                                    .css('pointerEvents', 'auto')
+                                    .css('backgroundColor', '#43cee0')
+                                    .hover(
+                                      function(){
+                                        $(this).css('backgroundColor', '#1eabbd');
+                                      },
+                                      function(){
+                                        $(this).css('backgroundColor', '#43cee0');
+                                      }
+                                    );  
+              }
+              
+              // ブックデータの整理と定義
+              var bookData = data.Items;
+              $.each(bookData, function(index,val) {
+                var data__img = val.Item.largeImageUrl;
+                var data__author = val.Item.author;
+                var data__title = val.Item.title;
+                var data__publisherName = val.Item.publisherName;
+                var data__url = val.Item.itemUrl;
+                
+                // データのあてはめとhtmlの追加
+                $('.lists').append(listHtml);
+                $('.lists__item__link').eq(index).attr('href', data__url);
+                $('.lists__item__img').eq(index).attr('src', data__img);
+                $('.lists__item__img').eq(index).attr('alt', data__title);
+                $('.name__title').eq(index).append(data__title);
+                $('.name__author').eq(index).append(data__author);
+                $('.name__publisher').eq(index).append(data__publisherName);
+              });
+            });
+          });
+      
     </script>
   </body>
 </html>
