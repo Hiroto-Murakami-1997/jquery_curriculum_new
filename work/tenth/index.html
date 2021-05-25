@@ -99,7 +99,7 @@
 
 // ページャを隠す
 var hidePager = function(){
-$('.pager').hide();
+  $('.pager').hide();
 }
 
 hidePager();
@@ -111,6 +111,9 @@ $('.lists').find('.lists__item').remove();
 
 // 追加HTML
 var listHtml = '<li class="lists__item"><div class="lists__item__inner"><a href="#" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail name__title">作品名：</p><p class="lists__item__detail name__author">作者　：</p><p class="lists__item__detail name__publisher">出版社：</p></a></div></li>';
+var noResults = '<p class="error-message">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>';
+var noKeywords = '<p class="error-message">検索文字が入力されていません。</p>';
+var tooMatchRequest = '<p class="error-message">リクエスト過多です。しばらく時間を置いてからお試しください。</p>';
 
 //ページ番号セット
 var readPage = 1;
@@ -118,115 +121,138 @@ var readPage = 1;
 // 検索ボタンを押した後の処理
 $('.search__btn').on('click',function(){
 
-//既存リスト削除
-removeLists();
+  //既存要素の削除
+  $('.error-message').remove();
+  removeLists();
+  hidePager();
+  // 検索キーワードの受け渡し
+  inputKeyword = $('.search__text__input').val();
 
-// 検索キーワードの受け渡し
-var inputKeyword = $('.search__text__input').val();
+  // 検索キーワードない場合
+  if(inputKeyword === ''){
+    $('.message').append(noKeywords);
+    $('.pager').hide();
+  } else {
+    // 検索キーワードある場合
+    $('.error-message').remove();
+    $('.btn-wrapper').children('.btn-item')
+                     .css('backgroundColor', '#43cee0');
+  }
 
-//ページ番号の初期化
-if(readPage >= 2){
-readPage = 1;
-}
+  //ページ番号の初期化
+  if(readPage >= 2){
+    readPage = 1;
+  }
 
-// 楽天ブックス情報の読み込み
-$.ajax({
-url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
-type: 'GET',
-datatype: 'json',
-data: {
-// 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
-applicationId: appId, 
-booksGenreId: '001',
-hits: 20,
-keyword: inputKeyword,
-page: readPage
-}
-}).done(function(data) {
+  // 楽天ブックス情報の読み込み
+  $.ajax({
+  url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+  type: 'GET',
+  datatype: 'json', 
+  data: {
+  // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
+  applicationId: appId, 
+  booksGenreId: '001',
+  hits: 20,
+  keyword: inputKeyword,
+  page: readPage
+  }
+  })
 
-// 通信成功時の処理
+  // 通信成功時の処理
+  .done(function(data) {
+  
+    // データがあるときページャを表示
+    if(data.hits > 0){
+      $('.pager').show();
+    } else {
+      // 検索結果なし
+      $('.pager').hide();
+      $('.message').append(noResults);
+    }
 
-// データがあるときページャを表示
-if(data){
-$('.pager').show();
-}
+    // ページャデータの定義
+    pageCount = data.pageCount;
+    var currentPage = data.page;
+    $('.counter-all').text(pageCount);
+    $('.counter-current').text(currentPage);
 
-// ページャデータの定義
-pageCount = data.pageCount;
-var currentPage = data.page;
-$('.counter-all').text(pageCount);
-$('.counter-current').text(currentPage);
+    // ページャのデフォルト設定
+    $('.btn-wrapper').children('.btn-item')
+                    .css('pointerEvents', 'auto')
+                    .css('backgroundColr', '#43cee0')
+                    .hover(
+                      function(){
+                        $(this).css('backgroundColor', '#1eabbd');
+                      },
+                      function(){
+                        $(this).css('backgroundColor', '#43cee0');
+                      }
+                    );
 
-// ページャのデフォルト設定
-$('.btn-wrapper').children('.btn-item')
-              .css('pointerEvents', 'auto')
-              .css('backgroundColr', '#43cee0')
-              .hover(
-              function(){
-                $(this).css('backgroundColor', '#1eabbd');
-              },
-              function(){
-                $(this).css('backgroundColor', '#43cee0');
-              }
-              );
+    // ページャの先頭のボタン
+    $('.btn-wrapper').children('.btn-item')
+                    .eq(0)
+                    .css('pointerEvents', 'none')
+                    .css('backgroundColor', '#888');
 
-// ページャの先頭と最後尾のボタン設定
-$('.btn-wrapper').children('.btn-item')
-              .eq(0)
-              .css('pointerEvents', 'none')
-              .css('backgroundColor', '#888');
+    // 検索結果が１ページのみの場合
+    if (currentPage === pageCount){
+      $('.btn-wrapper').children('.btn-item')
+                      .css('pointerEvents', 'none')
+                      .css('backgroundColor', '#888');
+    }
 
-// 検索結果が１ページのみの場合
-if (currentPage === pageCount){
-$('.btn-wrapper').children('.btn-item')
-                .css('pointerEvents', 'none')
-                .css('backgroundColor', '#888');
-}
+    // ブックデータの整理と定義
+    var bookData = data.Items;
+    $.each(bookData, function(index,val) {
+      var data__img = val.Item.largeImageUrl;
+      var data__author = val.Item.author;
+      var data__title = val.Item.title;
+      var data__publisherName = val.Item.publisherName;
+      var data__url = val.Item.itemUrl;
 
-// ブックデータの整理と定義
-var bookData = data.Items;
-$.each(bookData, function(index,val) {
-var data__img = val.Item.largeImageUrl;
-var data__author = val.Item.author;
-var data__title = val.Item.title;
-var data__publisherName = val.Item.publisherName;
-var data__url = val.Item.itemUrl;
-
-// データのあてはめとhtmlの追加
-$('.lists').append(listHtml);
-$('.lists__item__link').eq(index).attr('href', data__url);
-$('.lists__item__img').eq(index).attr('src', data__img);
-$('.lists__item__img').eq(index).attr('alt', data__title);
-$('.name__title').eq(index).append(data__title);
-$('.name__author').eq(index).append(data__author);
-$('.name__publisher').eq(index).append(data__publisherName);
-});
-});
+      // データのあてはめとhtmlの追加
+      $('.lists').append(listHtml);
+      $('.lists__item__link').eq(index).attr('href', data__url);
+      $('.lists__item__img').eq(index).attr('src', data__img);
+      $('.lists__item__img').eq(index).attr('alt', data__title);
+      $('.name__title').eq(index).append(data__title);
+      $('.name__author').eq(index).append(data__author);
+      $('.name__publisher').eq(index).append(data__publisherName);
+    });
+  })
+  // 通信失敗時
+  .fail(function(data) {
+     if(inputKeyword !== ''){
+      $('.error-message').remove();
+      $('.message').append(tooMatchRequest);
+     }
+    // $('.error-message').remove();
+    // $('.message').append(tooMatchRequest);
+    });
 });
 // 次へボタン
 $('.btn-wrapper').children('.btn-item')
-          .eq(1)
-          .on('click', function(){
+                 .eq(1)
+                 .on('click', function(){
 
-          readPage++;
-          hidePager();
-          removeLists();
+                  readPage++;
+                  hidePager();
+                  removeLists();
 
-          // 検索キーワードの受け渡し
-          var inputKeyword = $('.search__text__input').val();
-
-          // データ再取得と割り当て
-          $.ajax({
-            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
-            type: 'GET',
-            datatype: 'json',
-            data: {
-              applicationId: appId, 
-              booksGenreId: '001',
-              hits: 20,
-              keyword: inputKeyword,
-              page: readPage
-            }
+                  // データ再取得と割り当て
+                  $.ajax({
+                    url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+                    type: 'GET',
+                    datatype: 'json',
+                    data: {
+                      applicationId: appId, 
+                      booksGenreId: '001',
+                      hits: 20,
+                      keyword: inputKeyword,
+                      page: readPage
+                  }
           }).done(function(data) {
 
             // データ再取得後の処理
@@ -316,9 +342,7 @@ $('.btn-wrapper').children('.btn-item')
             readPage--;
             hidePager();
             removeLists();
-
-            // 検索キーワードの受け渡し
-            var inputKeyword = $('.search__text__input').val();
+            
             // データ再取得と割り当て
             $.ajax({
               url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
