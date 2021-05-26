@@ -101,7 +101,6 @@
 var hidePager = function(){
   $('.pager').hide();
 }
-
 hidePager();
 
 // リストの削除
@@ -121,22 +120,24 @@ var readPage = 1;
 // 検索ボタンを押した後の処理
 $('.search__btn').on('click',function(){
 
-  //既存要素の削除
+  //既存要素の削除と更新
   $('.error-message').remove();
   removeLists();
   hidePager();
+  $('.btn-wrapper').children('.btn-item')
+                   .css('backgroundColor', '#43cee0');
   // 検索キーワードの受け渡し
   inputKeyword = $('.search__text__input').val();
 
-  // 検索キーワードない場合
-  if(inputKeyword === ''){
-    $('.message').append(noKeywords);
-    $('.pager').hide();
-  } else {
-    // 検索キーワードある場合
+  // 空文字検索エラー
+  var throwError__empty = function(){
     $('.error-message').remove();
-    $('.btn-wrapper').children('.btn-item')
-                     .css('backgroundColor', '#43cee0');
+    $('.message').append(noKeywords);
+  }
+  // リクエスト過多エラー
+  var throwError__request = function(){
+    $('.error-message').remove();
+    $('.message').append(tooMatchRequest);
   }
 
   //ページ番号の初期化
@@ -223,14 +224,15 @@ $('.search__btn').on('click',function(){
     });
   })
   // 通信失敗時
-  .fail(function(data) {
-     if(inputKeyword !== ''){
-      $('.error-message').remove();
-      $('.message').append(tooMatchRequest);
-     }
-    // $('.error-message').remove();
-    // $('.message').append(tooMatchRequest);
-    });
+  .fail(function(XMLHttpRequest) {
+    var errorNumber =  XMLHttpRequest.status;
+    console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+    if(errorNumber === 400){
+      throwError__empty();
+    } else if (errorNumber ===429){
+      throwError__request();
+    }
+  });
 });
 // 次へボタン
 $('.btn-wrapper').children('.btn-item')
