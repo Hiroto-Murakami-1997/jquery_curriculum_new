@@ -98,12 +98,12 @@
           $('.error-message').remove();
         }
         // エラーメッセージ表示
-        var noResults = '<p class="error-message">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>';
-        var noKeywords = '<p class="error-message">検索文字が入力されていません。</p>';
-        var tooMatchRequest = '<p class="error-message">リクエスト過多です。しばらく時間を置いてからお試しください。</p>';
-        var noInternet = '<p class="error-message">通信に失敗しました。インターネットの接続をご確認ください。</p>';
+        const noResults = '<p class="error-message">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>';
+        const noKeywords = '<p class="error-message">検索文字が入力されていません。</p>';
+        const tooMatchRequest = '<p class="error-message">リクエスト過多です。しばらく時間を置いてからお試しください。</p>';
+        const noInternet = '<p class="error-message">通信に失敗しました。インターネットの接続をご確認ください。</p>';
         function message_noResults(data, noResults){
-          if(!data){
+          if(data.hits === 0){
             $('.message').append(noResults);
           }
         }
@@ -120,46 +120,66 @@
           }
         }
         // 追加リスト
-        var listHtml = '<li class="lists__item"><div class="lists__item__inner"><a href="" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail">作品名：</p><p class="lists__item__detail">作者　：</p><p class="lists__item__detail">出版社：</p></a></div></li>'
+        const listHtml = '<li class="lists__item"><div class="lists__item__inner"><a href="" class="lists__item__link" target="_blank"><img src="" class="lists__item__img" alt=""><p class="lists__item__detail">作品名：</p><p class="lists__item__detail">作者　：</p><p class="lists__item__detail">出版社：</p></a></div></li>'
         function addList(listHtml){
           $('.lists').append(listHtml);
         }
         // ページャ
-        var pagerHtml = '<div class="pager" data-js="pager"><div class="counter"><span class="counter-current"></span>/<span class="counter-all"></span></div><div class="btn-wrapper"><a class="btn-item" data-js="page-prev" href="">前へ</a><a class="btn-item" data-js="page-next" href="">次へ</a></div></div>'
-        var currentPage =  '';
-        var pageCount = '';
-        function resetPager(pagerHtml, currentPage, pageCount){
+        const pagerHtml = '<div class="pager" data-js="pager"><div class="counter"><span class="counter-current"></span>/<span class="counter-all"></span></div><div class="btn-wrapper"><a class="btn-item" data-js="page-prev" href="">前へ</a><a class="btn-item" data-js="page-next" href="">次へ</a></div></div>'
+        let currentPage;
+        let pageCount;
+        function setDefaultPager(pagerHtml, currentPage, pageCount){
          //  ページャ作成
          $('.lists').after(pagerHtml);
          // ページャのデフォルト設定
          $('.btn-wrapper').children('.btn-item')
-                           .eq(1)
-                           .css('pointerEvents', 'auto')
-                           .css('backgroundColr', '#43cee0')
-                           .hover(
+                          .css('pointerEvents', 'auto')
+                          .css('backgroundColr', '#43cee0')
+                          .hover(
                             function(){
                               $(this).css('backgroundColor', '#1eabbd');
                             },
                             function(){
                               $(this).css('backgroundColor', '#43cee0');
                             }
-                           );
+                          );
           // ページャの先頭のボタン
+         if(readPage === 1){
           $('.btn-wrapper').children('.btn-item')
                            .eq(0)
                            .css('pointerEvents', 'none')
                            .addClass('disabled');
+         }
+         //次へボタン押した次が最後のページ
+         if(readPage === pageCount){
+            $('.btn-wrapper').children('.btn-item')
+                             .eq(1)
+                             .css('pointerEvents', 'none')
+                             .addClass('disabled');
+            $('.btn-wrapper').children('.btn-item')
+                             .eq(0)
+                             .css('pointerEvents', 'auto')
+                             .css('backgroundColr', '#43cee0')
+                             .hover(
+                                function(){
+                                  $(this).css('backgroundColor', '#1eabbd');
+                                },
+                                function(){
+                                  $(this).css('backgroundColor', '#43cee0');
+                                }
+                             );
+          }
           // 検索結果が１ページのみの場合
-          if (currentPage === pageCount){
+          if (pageCount === 1){
             $('.btn-wrapper').children('.btn-item')
                              .css('pointerEvents', 'none')
                              .addClass('disabled');
           }
         }
         function setPager(data, pagerHtml, currentPage, pageCount){
-          if(data){
+          if(data.hits >= 1){
             $('.pager').remove();
-            resetPager(pagerHtml, currentPage, pageCount);
+            setDefaultPager(pagerHtml, currentPage, pageCount);
             $('.counter-all').text(pageCount);
             $('.counter-current').text(currentPage);
           } else {
@@ -168,17 +188,21 @@
         }
         //ページ番号セット
         var readPage = 1;
-        function resetPageNum(readPage){
-          if(readPage >= 2){
-            return readPage = 1;
-          }
+        //検索キーワード受け渡し
+        let inputKeyword;
+        function getInputKeyword(){
+          inputKeyword = $('.search__text__input').val();
+          return inputKeyword;
         }
         //検索ボタン押した後の処理
         $('.search__btn').on('click', function(){
-          resetPageNum(readPage);
+          if(readPage >= 2){
+            readPage = 1;
+            return readPage;
+          }
           removeParts();
           // 検索キーワードの受け渡し
-          inputKeyword = $('.search__text__input').val();
+          getInputKeyword();
           // 楽天ブックス情報の読み込み
           $.ajax({
             url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
@@ -224,12 +248,88 @@
             throwError(errorNumber);
           });
         });
-        // $('a').on('click', 'a', function(e){
-        //   event.preventDefault();
-        // });
-        $('.btn-wrapper').children('.btn-item').eq(1).on('click', function(){
-          readPage++;
-          console.log(readPage);
+        //次へボタン
+        $('.container').on('click', '.btn-item', function(e){
+          e.preventDefault();
+          var clickedButton = $(this).data('js');
+          console.log(clickedButton);
+          if(clickedButton === 'page-next'){
+            readPage++;
+            removeParts();
+            $.ajax({
+                      url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+                      type: 'GET',
+                      datatype: 'json',
+                      data: {
+                        applicationId: appId, 
+                        booksGenreId: '001',
+                        hits: 20,
+                        keyword: inputKeyword,
+                        page: readPage
+                      }
+                    })
+            .done(function(data){
+              // ページャデータの定義と表示
+              pageCount = data.pageCount;
+              var currentPage = data.page;
+              setPager(data, pagerHtml, currentPage, pageCount);
+              // ブックデータの整理と定義
+              var bookData = data.Items;
+              $.each(bookData, function(index,val) {
+                var data__img = val.Item.largeImageUrl;
+                var data__author = val.Item.author;
+                var data__title = val.Item.title;
+                var data__publisherName = val.Item.publisherName;
+                var data__url = val.Item.itemUrl;
+                // データのあてはめとhtmlの追加
+                $('.lists').append(listHtml);
+                $('.lists__item__link').eq(index).attr('href', data__url);
+                $('.lists__item__img').eq(index).attr('src', data__img);
+                $('.lists__item__img').eq(index).attr('alt', data__title);
+                $('.lists__item__link').eq(index).children('.lists__item__detail').eq(0).append(data__title);
+                $('.lists__item__link').eq(index).children('.lists__item__detail').eq(1).append(data__author);
+                $('.lists__item__link').eq(index).children('.lists__item__detail').eq(2).append(data__publisherName);
+              });
+            });
+          } else {
+            readPage--;
+            removeParts();
+            $.ajax({
+                      url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+                      type: 'GET',
+                      datatype: 'json',
+                      data: {
+                        applicationId: appId, 
+                        booksGenreId: '001',
+                        hits: 20,
+                        keyword: inputKeyword,
+                        page: readPage
+                      }
+                    })
+            .done(function(data){
+              // ページャデータの定義と表示
+              pageCount = data.pageCount;
+              var currentPage = data.page;
+              setPager(data, pagerHtml, currentPage, pageCount);
+              // ブックデータの整理と定義
+              var bookData = data.Items;
+              $.each(bookData, function(index,val) {
+                var data__img = val.Item.largeImageUrl;
+                var data__author = val.Item.author;
+                var data__title = val.Item.title;
+                var data__publisherName = val.Item.publisherName;
+                var data__url = val.Item.itemUrl;
+                // データのあてはめとhtmlの追加
+                $('.lists').append(listHtml);
+                $('.lists__item__link').eq(index).attr('href', data__url);
+                $('.lists__item__img').eq(index).attr('src', data__img);
+                $('.lists__item__img').eq(index).attr('alt', data__title);
+                $('.lists__item__link').eq(index).children('.lists__item__detail').eq(0).append(data__title);
+                $('.lists__item__link').eq(index).children('.lists__item__detail').eq(1).append(data__author);
+                $('.lists__item__link').eq(index).children('.lists__item__detail').eq(2).append(data__publisherName);
+              });
+            });
+          }
         });
       });
     </script>
