@@ -156,22 +156,17 @@
           if(data.hits >= 1){
 
             var pagerHtml = '<div class="pager" data-js="pager">' +
-                          '<div class="counter">' +
-                            '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>' +
-                          '</div>' +
-                          '<div class="btn-wrapper">' +
-                            '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
-                            '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
-                          '</div>' +
-                         '</div>';
+                              '<div class="counter">' +
+                                '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>' +
+                              '</div>' +
+                              '<div class="btn-wrapper">' +
+                                '<a class="btn-item" data-js="page-prev" href="">前へ</a>' +
+                                '<a class="btn-item" data-js="page-next" href="">次へ</a>' +
+                              '</div>' +
+                            '</div>';
             
             //  ページャ作成
             $('.lists').after(pagerHtml);
-
-            // ページャのデフォルト設定
-            $('.btn-wrapper').children('.btn-item')
-                             .css('pointerEvents', 'auto')
-                             .css('backgroundColr', '#43cee0');
 
             // ページャの先頭のボタン
             if(readPage === 1){
@@ -277,15 +272,15 @@
 
             // データのあてはめとhtmlの追加
             var listHtml =  '<li class="lists__item">' + 
-                          '<div class="lists__item__inner">' + 
-                            '<a href="' + data__url + '" class="lists__item__link" target="_blank">' +
-                              '<img src="' + data__img + '" class="lists__item__img" alt="">' +
-                              '<p class="lists__item__detail">作品名：' + data__title + '</p>' +
-                              '<p class="lists__item__detail">作者　：' + data__author + '</p>' +
-                              '<p class="lists__item__detail">出版社：' + data__publisherName + '</p>' +
-                            '</a>' +
-                          '</div>' +
-                        '</li>';
+                              '<div class="lists__item__inner">' + 
+                                '<a href="' + data__url + '" class="lists__item__link" target="_blank">' +
+                                  '<img src="' + data__img + '" class="lists__item__img" alt="">' +
+                                  '<p class="lists__item__detail">作品名：' + data__title + '</p>' +
+                                  '<p class="lists__item__detail">作者　：' + data__author + '</p>' +
+                                  '<p class="lists__item__detail">出版社：' + data__publisherName + '</p>' +
+                                '</a>' +
+                              '</div>' +
+                            '</li>';
 
             $('.lists').append(listHtml);
 
