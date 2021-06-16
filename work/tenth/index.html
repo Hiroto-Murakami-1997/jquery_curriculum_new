@@ -99,10 +99,10 @@
         var noInternet = '<p class="error-message">通信に失敗しました。インターネットの接続をご確認ください。</p>';
 
         //ページ番号セット
-        // var readPage;
+        var readPage = '';
 
         //検索キーワード受け渡し
-        // var inputKeyword;
+        var inputKeyword = '';
         
         //既存要素削除とリセット
         function removeParts(){
@@ -171,36 +171,17 @@
             // ページャの先頭のボタン
             if(readPage === 1){
 
-            $('.btn-wrapper').children('.btn-item')
-                             .eq(0)
-                             .css('pointerEvents', 'none')
-                             .addClass('disabled');
+              $('[data-js="page-prev"]').addClass('disabled');
 
             }
 
             //次へボタン押した次が最後のページ
             if(readPage === pageCount){
 
-              $('.btn-wrapper').children('.btn-item')
-                               .eq(1)
-                               .css('pointerEvents', 'none')
-                               .addClass('disabled');
-
-              $('.btn-wrapper').children('.btn-item')
-                               .eq(0)
-                               .css('pointerEvents', 'auto')
-                               .css('backgroundColr', '#43cee0');
-                                
-            }
-
-            // 検索結果が１ページのみの場合
-            if (pageCount === 1){
-
-              $('.btn-wrapper').children('.btn-item')
-                               .css('pointerEvents', 'none')
-                               .addClass('disabled');
+              $('[data-js="page-next"]').addClass('disabled');
 
             }
+
           }
 
         }
@@ -258,6 +239,8 @@
           // ブックデータの整理と定義
           var bookData = data.Items;
 
+          var mergedList = '';
+
           $.each(bookData, function(index,val) {
 
             var data__img = val.Item.largeImageUrl;
@@ -282,10 +265,10 @@
                               '</div>' +
                             '</li>';
 
-            $('.lists').append(listHtml);
+             mergedList = mergedList + listHtml;
 
           });
-
+          $('.lists').append(mergedList);
         }
         //検索ボタン押した後の処理
         $('.search__btn').on('click', function(){
