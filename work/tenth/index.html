@@ -136,11 +136,15 @@
               break;
 
             default:
+              $('.message').append('不明なエラーが発生しました。サポートに問い合わせてください。');
               break;
           }
         }
        
         // ページャセット
+        //マジックナンバー
+        var firstPageNum = 1;
+        var pageCount = '';
         function setPager(data, currentPage, pageCount){
           if(data.hits >= 1){
             var pagerHtml = '<div class="pager" data-js="pager">' +
@@ -155,9 +159,6 @@
             
             //  ページャ作成
             $('.lists').after(pagerHtml);
-            
-            //マジックナンバー
-            var firstPageNum = 1;
 
             // ページャの先頭のボタン
             if(readPage === firstPageNum){
@@ -201,7 +202,7 @@
           message_noResults(data, noResults);
 
           // ページャデータの定義と表示
-          var pageCount = data.pageCount;
+          pageCount = data.pageCount;
           var currentPage = data.page;
           setPager(data, currentPage, pageCount);
 
@@ -246,19 +247,33 @@
         });
         
         // 次へボタン
-        $(document).on('click', '[data-js="page-next"]', function(e){ 
-          removeParts();
-          e.preventDefault();
-          readPage++;
-          ajaxRequest();
+        $(document).on('click', '[data-js="page-next"]', function(e){
+          switch(readPage){
+            case pageCount:
+              e.preventDefault();
+              break;
+            default:
+              removeParts();
+              e.preventDefault();
+              readPage++;
+              ajaxRequest();
+              break;
+          }
         });
 
         // 前へボタン
         $(document).on('click', '[data-js="page-prev"]', function(e){ 
-          removeParts();
-          e.preventDefault();
-          readPage--;
-          ajaxRequest();
+          switch(readPage){
+            case firstPageNum:
+              e.preventDefault();
+              break;
+            default:
+              removeParts();
+              e.preventDefault();
+              readPage--;
+              ajaxRequest();
+              break;
+          }
         });
       });
     </script>
