@@ -248,32 +248,26 @@
         
         // 次へボタン
         $(document).on('click', '[data-js="page-next"]', function(e){
-          switch(readPage){
-            case pageCount:
-              e.preventDefault();
-              break;
-            default:
-              removeParts();
-              e.preventDefault();
-              readPage++;
-              ajaxRequest();
-              break;
+          e.preventDefault();
+          if(readPage === pageCount){
+            return;
           }
+
+          removeParts();
+          readPage++;
+          ajaxRequest();
         });
 
         // 前へボタン
         $(document).on('click', '[data-js="page-prev"]', function(e){ 
-          switch(readPage){
-            case firstPageNum:
-              e.preventDefault();
-              break;
-            default:
-              removeParts();
-              e.preventDefault();
-              readPage--;
-              ajaxRequest();
-              break;
+          e.preventDefault();
+          if(readPage === firstPageNum){
+            return;
           }
+
+          removeParts();
+          readPage--;
+          ajaxRequest();
         });
       });
     </script>
