@@ -91,11 +91,8 @@
 
         // エラーメッセージ表示
         var noResults = '<p class="error-message">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>';
-
         var noKeywords = '<p class="error-message">検索文字が入力されていません。</p>';
-
         var tooMatchRequest = '<p class="error-message">リクエスト過多です。しばらく時間を置いてからお試しください。</p>';
-
         var noInternet = '<p class="error-message">通信に失敗しました。インターネットの接続をご確認ください。</p>';
 
         //ページ番号セット
@@ -106,55 +103,46 @@
         
         //既存要素削除とリセット
         function removeParts(){
-
           // 商品リスト削除
           $('.lists__item').remove();
-
           // ページャ削除
           $('.pager').remove();
-
           // エラーメッセージ削除
           $('.error-message').remove();
-
         }
 
         // 検索結果なし
         function message_noResults(data, noResults){
-
           if(data.hits === 0){
-
             $('.message').append(noResults);
-
           }
-
         }
 
-        // コンソールエラー
+        // コンソールエラー switch文 例がいつ来る
         function throwError(errorNumber){
-
           $('.error-message').remove();
 
-          if(errorNumber === 400){
+          switch (errorNumber){
+            case 400:
+              $('.message').append(noKeywords);
+              break;
 
-            $('.message').append(noKeywords);
+            case 429:
+              $('.message').append(tooMatchRequest);
+              break;
 
-          } else if (errorNumber === 429){
+            case 0:
+              $('.message').append(noInternet);
+              break;
 
-            $('.message').append(tooMatchRequest);
-
-          } else if (errorNumber === 0){
-
-            $('.message').append(noInternet);
-
+            default:
+              break;
           }
-
         }
        
         // ページャセット
         function setPager(data, currentPage, pageCount){
-
           if(data.hits >= 1){
-
             var pagerHtml = '<div class="pager" data-js="pager">' +
                               '<div class="counter">' +
                                 '<span class="counter-current">' + currentPage + '</span>/<span class="counter-all">' + pageCount + '</span>' +
@@ -167,90 +155,65 @@
             
             //  ページャ作成
             $('.lists').after(pagerHtml);
+            
+            //マジックナンバー
+            var firstPageNum = 1;
 
             // ページャの先頭のボタン
-            if(readPage === 1){
-
+            if(readPage === firstPageNum){
               $('[data-js="page-prev"]').addClass('disabled');
-
             }
 
             //次へボタン押した次が最後のページ
             if(readPage === pageCount){
-
               $('[data-js="page-next"]').addClass('disabled');
-
             }
-
           }
-
         }
 
         //ajaxリクエスト
         function ajaxRequest(){
-
            $.ajax({
-
               url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
               type: 'GET',
               datatype: 'json', 
               data: {
-                
               // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
                 applicationId: appId, 
                 booksGenreId: '001',
                 hits: 20,
                 keyword: inputKeyword,
                 page: readPage
-
               }
-
             })
             .done(function(data){
-
               insertData(data)
-
             })
-
             // 通信失敗時
             .fail(function(XMLHttpRequest) {
-
               var errorNumber =  XMLHttpRequest.status;
-
               console.log("XMLHttpRequest : " + XMLHttpRequest.status);
-
               throwError(errorNumber);
-
             });
-
         }
         //通信成功時データ挿入
         function insertData(data){
-
           message_noResults(data, noResults);
 
           // ページャデータの定義と表示
           var pageCount = data.pageCount;
-
           var currentPage = data.page;
-
           setPager(data, currentPage, pageCount);
 
           // ブックデータの整理と定義
           var bookData = data.Items;
-
           var mergedList = '';
 
           $.each(bookData, function(index,val) {
-
             var data__img = val.Item.largeImageUrl;
-
             var data__author = val.Item.author;
-
             var data__title = val.Item.title;
-
             var data__publisherName = val.Item.publisherName;
-
             var data__url = val.Item.itemUrl;
 
             // データのあてはめとhtmlの追加
@@ -264,52 +227,38 @@
                                 '</a>' +
                               '</div>' +
                             '</li>';
-
              mergedList = mergedList + listHtml;
-
           });
           $('.lists').append(mergedList);
         }
         //検索ボタン押した後の処理
-        $('.search__btn').on('click', function(){
-
+        $('[data-js="search-btn"]').on('click', function(){ //データ属性
           readPage = 1;
 
           //リストとページャのリセット
           removeParts();
 
           // 検索キーワードの受け渡し
-          inputKeyword = $('.search__text__input').val();
-
+          inputKeyword = $('[data-js="search-word"]').val(); //データ属性
+          console.log(inputKeyword);
           // 楽天ブックス情報の読み込み
           ajaxRequest();
-
         });
-        //前へ次へボタン
-        $('.container').on('click', '.btn-item', function(e){
-
-          e.preventDefault();
-
-          var clickedButton = $(this).data('js');
-
-          console.log(clickedButton);
-
+        
+        // 次へボタン
+        $(document).on('click', '[data-js="page-next"]', function(e){ 
           removeParts();
+          e.preventDefault();
+          readPage++;
+          ajaxRequest();
+        });
 
-          if(clickedButton === 'page-next'){
-
-            readPage++;
-
-            ajaxRequest();
-
-          } else if (clickedButton === 'page-prev'){
-
-            readPage--;
-
-            ajaxRequest();
-
-          }
-
+        // 前へボタン
+        $(document).on('click', '[data-js="page-prev"]', function(e){ 
+          removeParts();
+          e.preventDefault();
+          readPage--;
+          ajaxRequest();
         });
       });
     </script>
